@@ -6,10 +6,10 @@ ODIR := obj
 
 LIBS=-lm
 
-_DEPS = vm.h value.h memory.h chunk.h debug.h
+_DEPS = scanner.h compiler.h vm.h value.h memory.h chunk.h debug.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
-_OBJ =  vm.o value.o memory.o chunk.o debug.o main.o 
+_OBJ =  scanner.o compiler.o vm.o value.o memory.o chunk.o debug.o main.o 
 OBJ =  $(patsubst %,$(ODIR)/%,$(_OBJ))
 
 clox: $(OBJ)
