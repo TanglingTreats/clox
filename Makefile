@@ -1,26 +1,33 @@
-CC = gcc
-CFLAGS = -c -Wall -std=c99
-ODIR = ./lib
+IDIR=./include
+CC=gcc
+CFLAGS=-I.
 
-main: main.o common.o memory.o chunk.o debug.o | lib_dir
-	$(CC) main.o common.o memory.o chunk.o debug.o -o clox
+ODIR := obj
 
-main.o: main.c
-	$(CC) $(CFLAGS) main.c --outdir=$(ODIR)/
+LIBS=-lm
 
-common.o: common.h
-	$(CC) $(CFLAGS) common.h --outdir=$(ODIR)/
+_DEPS = memory.h chunk.h debug.h
+DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
-memory.o: memory.c
-	$(CC) $(CFLAGS) memory.c --outdir=$(ODIR)/
+_OBJ =  memory.o chunk.o debug.o main.o 
+OBJ =  $(patsubst %,$(ODIR)/%,$(_OBJ))
 
-chunk.o: chunk.c
-	$(CC) $(CFLAGS) chunk.c --outdir=$(ODIR)/
+$(ODIR)/%.o: %.c $(DEPS)
+	$(CC) -c -o $@ $< $(CFLAGS)
 
-debug.o: debug.c
-	$(CC) $(CFLAGS) debug.c --outdir=$(ODIR)/
+all: $(OBJ)
+	$(CC) -o $@ $^ $(CFLAGS) $(LIBS)
 
-lib_dir:
+$(OBJ): | $(ODIR)
+
+$(ODIR):
 	mkdir -p $(ODIR)
+
+
+.PHONY: clean
+
+clean:
+	rm -f $(ODIR)/*.o *~ core $(INCDIR)/*~
+
 
 
