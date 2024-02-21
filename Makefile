@@ -12,11 +12,11 @@ DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 _OBJ =  memory.o chunk.o debug.o main.o 
 OBJ =  $(patsubst %,$(ODIR)/%,$(_OBJ))
 
+clox: $(OBJ)
+	$(CC) -o $@ $^ $(CFLAGS) $(LIBS)
+
 $(ODIR)/%.o: %.c $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
-
-all: $(OBJ)
-	$(CC) -o $@ $^ $(CFLAGS) $(LIBS)
 
 $(OBJ): | $(ODIR)
 
