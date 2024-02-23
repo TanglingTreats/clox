@@ -88,6 +88,9 @@ static void consume(TokenType type, const char *message) {
   errorAtCurrent(message);
 }
 
+/*
+ * Aggregate operation
+ */
 static void emitByte(uint8_t byte) {
   writeChunk(currentChunk(), byte, parser.previous.line);
 }
@@ -163,7 +166,7 @@ static void grouping() {
  */
 static void number() {
   double value = strtod(parser.previous.start, NULL);
-  emitConstant(value);
+  emitConstant(NUMBER_VAL(value));
 }
 
 static void unary() {
