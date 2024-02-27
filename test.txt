@@ -2,4 +2,12 @@ var breakfast = "beignets";
 var beverage = "cafe au lait";
 breakfast = "beignets with " + beverage;
 
+{
+  var beverage = "cafe latte";
+  print "Is in block";
+  print beverage;
+  print "beignets with " + beverage;
+}
+
+print "Is outside block";
 print breakfast;
