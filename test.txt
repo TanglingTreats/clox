@@ -2,11 +2,14 @@ var breakfast = "beignets";
 var beverage = "cafe au lait";
 breakfast = "beignets with " + beverage;
 
-{
+var i = 0;
+
+while(i < 5) {
   var beverage = "cafe latte";
   print "Is in block";
   print beverage;
   print "beignets with " + beverage;
+  i = i + 1;
 }
 
 print "Is outside block";
