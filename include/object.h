@@ -1,6 +1,7 @@
 #ifndef clox_object_h
 #define clox_object_h
 
+#include "chunk.h"
 #include "common.h"
 #include "value.h"
 
@@ -8,15 +9,18 @@
 
 #define IS_STRING(value) isObjType(value, OBJ_STRING)
 
+#define AS_FUNCTION(value) ((ObjFunction *)AS_OBJ(value))
 #define AS_STRING(value) ((ObjString *)AS_OBJ(value))
 #define AS_CSTRING(value) (((ObjString *)AS_OBJ(value))->chars)
 
 // Object types
 typedef enum {
+  OBJ_FUNCTION,
   OBJ_STRING,
 } ObjType;
 
-/* Base struct - Struct fields are arranged in memory in the order of
+/*
+ * Base struct - Struct fields are arranged in memory in the order of
  * declaration. Allows pointing the struct to a pointer of the first field
  * (like pointing to the first element in an array)
  */
@@ -24,6 +28,16 @@ struct Obj {
   ObjType type;
   struct Obj *next;
 };
+
+/*
+ * Call stack
+ */
+typedef struct {
+  Obj obj;
+  int arity;
+  Chunk chunk;
+  ObjString *name;
+} ObjFunction;
 
 // --- Derived struct ---
 
@@ -34,6 +48,7 @@ struct ObjString {
   uint32_t hash;
 };
 
+ObjFunction *newFunction();
 ObjString *takeString(char *chars, int length);
 ObjString *copyString(const char *chars, int length);
 void printObject(Value value);
