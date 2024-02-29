@@ -43,6 +43,9 @@ static void runtimeError(const char *format, ...) {
   resetStack();
 }
 
+/*
+ * Dynamically allocate memory and able to handle garbage collection
+ */
 static void defineNative(const char *name, NativeFn function) {
   push(OBJ_VAL(copyString(name, (int)strlen(name))));
   push(OBJ_VAL(newNative(function)));
@@ -143,10 +146,14 @@ static void concatenate() {
 static InterpretResult run() {
   CallFrame *frame = &vm.frames[vm.frameCount - 1];
 #define READ_BYTE() (*frame->ip++)
+
 #define READ_SHORT()                                                           \
   (frame->ip += 2, (uint16_t)((frame->ip[-2] << 8) | frame->ip[-1]))
+
 #define READ_CONSTANT() (frame->function->chunk.constants.values[READ_BYTE()])
+
 #define READ_STRING() AS_STRING(READ_CONSTANT())
+
 #define BINARY_OP(valueType, op)                                               \
   do {                                                                         \
     if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) {                          \
@@ -309,6 +316,7 @@ static InterpretResult run() {
       // Retain value in stack
       push(result);
       frame = &vm.frames[vm.frameCount - 1];
+      break;
     }
     }
   }
@@ -325,10 +333,6 @@ InterpretResult interpret(const char *source) {
     return INTERPRET_COMPILE_ERROR;
 
   push(OBJ_VAL(function));
-  CallFrame *frame = &vm.frames[vm.frameCount++];
-  frame->function = function;
-  frame->ip = function->chunk.code;
-  frame->slots = vm.stack;
   call(function, 0);
 
   return run();
