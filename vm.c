@@ -108,6 +108,7 @@ static bool call(ObjFunction *function, int argCount) {
 
 static bool callValue(Value callee, int argCount) {
   if (IS_OBJ(callee)) {
+
     switch (OBJ_TYPE(callee)) {
     case OBJ_FUNCTION:
       return call(AS_FUNCTION(callee), argCount);

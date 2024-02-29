@@ -807,8 +807,6 @@ ObjFunction *compile(const char *source) {
     declaration();
   }
 
-  endCompiler();
-
   ObjFunction *function = endCompiler();
   return parser.hadError ? NULL : function;
 }
