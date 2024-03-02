@@ -1,3 +1,5 @@
 BasedOnStyle: Google
 IndentWidth: 2
 SortIncludes: Never
+PointerAlignment: Left
+DerivePointerAlignment: false
