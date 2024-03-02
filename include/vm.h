@@ -13,9 +13,9 @@
  *  Store function execution and jump points
  */
 typedef struct {
-  ObjClosure *closure;
-  uint8_t *ip;
-  Value *slots;
+  ObjClosure* closure;
+  uint8_t* ip;
+  Value* slots;
 } CallFrame;
 
 /*
@@ -26,10 +26,11 @@ typedef struct {
   int frameCount;  // Store current height of CallFrame stack
 
   Value stack[STACK_MAX];
-  Value *stackTop;
+  Value* stackTop;
   Table globals;
   Table strings;
-  Obj *objects;
+  ObjUpvalue* openUpvalues;
+  Obj* objects;
 } VM;
 
 /*
@@ -45,7 +46,7 @@ extern VM vm;
 
 void initVM();
 void freeVM();
-InterpretResult interpret(const char *source);
+InterpretResult interpret(const char* source);
 void push(Value value);
 Value pop();
 

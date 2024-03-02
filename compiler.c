@@ -45,6 +45,7 @@ typedef struct {
 typedef struct {
   Token name;
   int depth;
+  bool isCaptured;
 } Local;
 
 typedef struct {
@@ -55,8 +56,8 @@ typedef struct {
 typedef enum { TYPE_FUNCTION, TYPE_SCRIPT } FunctionType;
 
 typedef struct Compiler {
-  struct Compiler *enclosing;
-  ObjFunction *function;
+  struct Compiler* enclosing;
+  ObjFunction* function;
   FunctionType type;
 
   Local locals[UINT8_COUNT];
@@ -66,12 +67,12 @@ typedef struct Compiler {
 } Compiler;
 
 Parser parser;
-Compiler *current = NULL;
-Chunk *compilingChunk;
+Compiler* current = NULL;
+Chunk* compilingChunk;
 
-static Chunk *currentChunk() { return &current->function->chunk; }
+static Chunk* currentChunk() { return &current->function->chunk; }
 
-static void errorAt(Token *token, const char *message) {
+static void errorAt(Token* token, const char* message) {
   if (parser.panicMode) return;
   parser.panicMode = true;
   fprintf(stderr, "[line %d] Error", token->line);
@@ -88,9 +89,9 @@ static void errorAt(Token *token, const char *message) {
   parser.hadError = true;
 }
 
-static void error(const char *message) { errorAt(&parser.previous, message); }
+static void error(const char* message) { errorAt(&parser.previous, message); }
 
-static void errorAtCurrent(const char *message) {
+static void errorAtCurrent(const char* message) {
   errorAt(&parser.current, message);
 }
 
@@ -111,7 +112,7 @@ static void advance() {
 /*
  * Go to next token
  */
-static void consume(TokenType type, const char *message) {
+static void consume(TokenType type, const char* message) {
   if (parser.current.type == type) {
     advance();
     return;
@@ -207,7 +208,7 @@ static void patchJump(int offset) {
 /*
  * Initialize a compiler (top-level function or within local function)
  */
-static void initCompiler(Compiler *compiler, FunctionType type) {
+static void initCompiler(Compiler* compiler, FunctionType type) {
   compiler->enclosing = current;
   compiler->function = NULL;
   compiler->type = type;
@@ -221,15 +222,16 @@ static void initCompiler(Compiler *compiler, FunctionType type) {
         copyString(parser.previous.start, parser.previous.length);
   }
 
-  Local *local = &current->locals[current->localCount++];
+  Local* local = &current->locals[current->localCount++];
   local->depth = 0;
+  local->isCaptured = false;
   local->name.start = "";
   local->name.length = 0;
 }
 
-static ObjFunction *endCompiler() {
+static ObjFunction* endCompiler() {
   emitReturn();
-  ObjFunction *function = current->function;
+  ObjFunction* function = current->function;
 #ifdef DEBUG_PRINT_CODE
   if (!parser.hadError) {
     disassembleChunk(currentChunk(), function->name != NULL
@@ -251,6 +253,11 @@ static void endScope() {
          current->locals[current->localCount - 1].depth > current->scopeDepth) {
     emitByte(OP_POP);
     current->localCount--;
+    if (current->locals[current->localCount - 1].isCaptured) {
+      emitByte(OP_CLOSE_UPVALUE);
+    } else {
+      emitByte(OP_POP);
+    }
   }
 }
 
@@ -258,10 +265,10 @@ static void endScope() {
 static void expression();
 static void statement();
 static void declaration();
-static ParseRule *getRule(TokenType type);
+static ParseRule* getRule(TokenType type);
 static void parsePrecedence(Precedence precendence);
 
-static uint8_t identifierConstant(Token *name) {
+static uint8_t identifierConstant(Token* name) {
   return makeConstant(OBJ_VAL(copyString(name->start, name->length)));
 }
 
@@ -270,15 +277,16 @@ static void addLocal(Token name) {
     error("Too many local variables in function.");
     return;
   }
-  Local *local = &current->locals[current->localCount++];
+  Local* local = &current->locals[current->localCount++];
   local->name = name;
   // Mark as uninitialized (sentinel value)
   local->depth = -1;
+  local->isCaptured = -1;
 }
 
 //
 // Check if there are conflicting identifiers
-static bool identifiersEqual(Token *a, Token *b) {
+static bool identifiersEqual(Token* a, Token* b) {
   if (a->length != b->length) return false;
   return memcmp(a->start, b->start, a->length) == 0;
 }
@@ -286,9 +294,9 @@ static bool identifiersEqual(Token *a, Token *b) {
 static void declareVariable() {
   if (current->scopeDepth == 0) return;
 
-  Token *name = &parser.previous;
+  Token* name = &parser.previous;
   for (int i = current->localCount - 1; i >= 0; i--) {
-    Local *local = &current->locals[i];
+    Local* local = &current->locals[i];
     if (local->depth != -1 && local->depth < current->scopeDepth) {
       break;
     }
@@ -301,7 +309,7 @@ static void declareVariable() {
   addLocal(*name);
 }
 
-static uint8_t parseVariable(const char *message) {
+static uint8_t parseVariable(const char* message) {
   consume(TOKEN_IDENTIFIER, "errorMessage");
 
   declareVariable();
@@ -348,9 +356,9 @@ static void and_(bool canAssign) {
   patchJump(endJump);
 }
 
-static int resolveLocal(Compiler *compiler, Token *name) {
+static int resolveLocal(Compiler* compiler, Token* name) {
   for (int i = compiler->localCount - 1; i >= 0; i--) {
-    Local *local = &compiler->locals[i];
+    Local* local = &compiler->locals[i];
     if (identifiersEqual(name, &local->name)) {
       if (local->depth == -1) {
         error("Can't read local variable in its own initializer");
@@ -364,12 +372,12 @@ static int resolveLocal(Compiler *compiler, Token *name) {
   return -1;
 }
 
-static int addUpvalue(Compiler *compiler, uint8_t index, bool isLocal) {
+static int addUpvalue(Compiler* compiler, uint8_t index, bool isLocal) {
   int upvalueCount = compiler->function->upvalueCount;
 
   // Check if upvalue exists
   for (int i = 0; i < upvalueCount; i++) {
-    Upvalue *upvalue = &compiler->upvalues[i];
+    Upvalue* upvalue = &compiler->upvalues[i];
     if (upvalue->index == index && upvalue->isLocal == isLocal) {
       return i;
     }
@@ -385,12 +393,13 @@ static int addUpvalue(Compiler *compiler, uint8_t index, bool isLocal) {
   return compiler->function->upvalueCount++;
 }
 
-static int resolveUpvalue(Compiler *compiler, Token *name) {
+static int resolveUpvalue(Compiler* compiler, Token* name) {
   if (compiler->enclosing == NULL) return -1;
 
   // Base case if upvalue is found in immediate surrounding function
   int local = resolveLocal(compiler->enclosing, name);
   if (local != -1) {
+    compiler->enclosing->locals[local].isCaptured = true;
     return addUpvalue(compiler, (uint8_t)local, true);
   }
 
@@ -406,7 +415,7 @@ static int resolveUpvalue(Compiler *compiler, Token *name) {
 
 static void binary(bool canAssign) {
   TokenType operatorType = parser.previous.type;
-  ParseRule *rule = getRule(operatorType);
+  ParseRule* rule = getRule(operatorType);
   parsePrecedence((Precedence)(rule->precedence + 1));
 
   switch (operatorType) {
@@ -614,7 +623,7 @@ static void parsePrecedence(Precedence precedence) {
   }
 }
 
-static ParseRule *getRule(TokenType type) { return &rules[type]; }
+static ParseRule* getRule(TokenType type) { return &rules[type]; }
 
 static void expression() { parsePrecedence(PREC_ASSIGNMENT); }
 
@@ -647,7 +656,7 @@ static void function(FunctionType type) {
   block();
 
   // End compiler completely when we reach the end of the function body
-  ObjFunction *function = endCompiler();
+  ObjFunction* function = endCompiler();
   emitBytes(OP_CLOSURE, makeConstant(OBJ_VAL(function)));
 
   for (int i = 0; i < function->upvalueCount; i++) {
@@ -839,7 +848,7 @@ static void statement() {
 /*
  * Initialize parser
  */
-ObjFunction *compile(const char *source) {
+ObjFunction* compile(const char* source) {
   initScanner(source);
   Compiler compiler;
   initCompiler(&compiler, TYPE_SCRIPT);
@@ -853,6 +862,6 @@ ObjFunction *compile(const char *source) {
     declaration();
   }
 
-  ObjFunction *function = endCompiler();
+  ObjFunction* function = endCompiler();
   return parser.hadError ? NULL : function;
 }
