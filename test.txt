@@ -1,16 +1,9 @@
-var breakfast = "beignets";
-var beverage = "cafe au lait";
-breakfast = "beignets with " + beverage;
-
-var i = 0;
-
-while(i < 5) {
-  var beverage = "cafe latte";
-  print "Is in block";
-  print beverage;
-  print "beignets with " + beverage;
-  i = i + 1;
+var x = "global";
+fun outer() {
+  var x = "outer";
+  fun inner() {
+    print x;
+  }
+  inner();
 }
-
-print "Is outside block";
-print breakfast;
+outer();

@@ -8,7 +8,7 @@
 #include "include/vm.h"
 
 #define ALLOCATE_OBJ(type, objectType)                                         \
-  (type *)allocateObject(sizeof(type), objectType)
+(type *)allocateObject(sizeof(type), objectType)
 
 static Obj *allocateObject(size_t size, ObjType type) {
   Obj *object = (Obj *)reallocate(NULL, 0, size);
@@ -20,7 +20,16 @@ static Obj *allocateObject(size_t size, ObjType type) {
 }
 
 /*
- * Init function
+ * Create closure
+ */
+ObjClosure *newClosure(ObjFunction *objFunction) {
+  ObjClosure *closure = ALLOCATE_OBJ(ObjClosure, OBJ_CLOSURE);
+  closure->function = objFunction;
+  return closure;
+}
+
+/*
+ * Create function
  */
 ObjFunction *newFunction() {
   ObjFunction *function = ALLOCATE_OBJ(ObjFunction, OBJ_FUNCTION);
@@ -90,14 +99,17 @@ static void printFunction(ObjFunction *function) {
 
 void printObject(Value value) {
   switch (OBJ_TYPE(value)) {
-  case OBJ_FUNCTION:
-    printFunction(AS_FUNCTION(value));
-    break;
-  case OBJ_NATIVE:
-    printf("<native fn>");
-    break;
-  case OBJ_STRING:
-    printf("%s", AS_CSTRING(value));
-    break;
+    case OBJ_CLOSURE:
+      printFunction(AS_CLOSURE(value)->function);
+      break;
+    case OBJ_FUNCTION:
+      printFunction(AS_FUNCTION(value));
+      break;
+    case OBJ_NATIVE:
+      printf("<native fn>");
+      break;
+    case OBJ_STRING:
+      printf("%s", AS_CSTRING(value));
+      break;
   }
 }

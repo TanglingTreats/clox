@@ -13,7 +13,7 @@
  *  Store function execution and jump points
  */
 typedef struct {
-  ObjFunction *function;
+  ObjClosure *closure;
   uint8_t *ip;
   Value *slots;
 } CallFrame;
@@ -23,7 +23,7 @@ typedef struct {
  */
 typedef struct {
   CallFrame frames[FRAMES_MAX];
-  int frameCount; // Store current height of CallFrame stack
+  int frameCount;  // Store current height of CallFrame stack
 
   Value stack[STACK_MAX];
   Value *stackTop;
