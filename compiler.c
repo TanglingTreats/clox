@@ -489,6 +489,7 @@ static void dot(bool canAssign) {
     emitBytes(OP_SET_PROPERTY, name);
   } else if (match(TOKEN_LEFT_PAREN)) {
     uint8_t argCount = argumentList();
+    // Optimized implementation
     emitBytes(OP_INVOKE, name);
     emitByte(argCount);
   } else {
