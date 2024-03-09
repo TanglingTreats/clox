@@ -1,6 +1,4 @@
-class Vox {
-
-}
+class Vox{}
 print Vox;
 
 fun outer() {

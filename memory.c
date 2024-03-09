@@ -60,13 +60,14 @@ static void markArray(ValueArray* array) {
 
 static void blackenObject(Obj* object) {
 #ifdef DEBUG_LOG_GC
-  printf("%p blacken", (void*)object);
+  printf("%p blacken ", (void*)object);
   printValue(OBJ_VAL(object));
   printf("\n");
 #endif
   switch (object->type) {
     case OBJ_CLASS: {
-      FREE(ObjClass, object);
+      ObjClass* klass = (ObjClass*)object;
+      markObject((Obj*)klass->name);
       break;
     }
     case OBJ_CLOSURE: {
@@ -104,8 +105,7 @@ static void freeObject(Obj* object) {
 #endif
   switch (object->type) {
     case OBJ_CLASS: {
-      ObjClass* klass = (ObjClass*)object;
-      markObject((Obj*)klass->name);
+      FREE(ObjClass, object);
       break;
     }
     case OBJ_CLOSURE: {
@@ -137,6 +137,7 @@ static void freeObject(Obj* object) {
     }
     case OBJ_UPVALUE: {
       FREE(ObjUpvalue, object);
+      break;
     }
   }
 }
