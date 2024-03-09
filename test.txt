@@ -1,3 +1,8 @@
+class Vox {
+
+}
+print Vox;
+
 fun outer() {
   var x = "outside";
   fun inner() {
