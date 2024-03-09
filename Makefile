@@ -15,6 +15,10 @@ OBJ =  $(patsubst %,$(ODIR)/%,$(_OBJ))
 clox: $(OBJ)
 	$(CC) -o $@ $^ $(CFLAGS) $(LIBS)
 
+test: $(OBJ)
+	$(CC) -g -o $@ $^ $(CFLAGS) $(LIBS)
+
+
 $(ODIR)/%.o: %.c $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
