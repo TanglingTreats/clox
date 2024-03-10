@@ -29,6 +29,10 @@ static int invokeInstruction(const char* name, Chunk* chunk, int offset) {
   return offset + 3;
 }
 
+/*
+ * @param name - Bytecode Instruction
+ * @param offset - Distance from current chunk
+ */
 static int simpleInstruction(const char* name, int offset) {
   printf("%s\n", name);
   return offset + 1;
@@ -82,6 +86,8 @@ int disassembleInstruction(Chunk* chunk, int offset) {
       return byteInstruction("OP_GET_UPVALUE", chunk, offset);
     case OP_SET_UPVALUE:
       return byteInstruction("OP_SET_UPVALUE", chunk, offset);
+    case OP_GET_SUPER:
+      return constantInstruction("OP_GET_SUPER", chunk, offset);
     case OP_EQUAL:
       return simpleInstruction("OP_EQUAL", offset);
     case OP_GREATER:
@@ -138,6 +144,8 @@ int disassembleInstruction(Chunk* chunk, int offset) {
       return simpleInstruction("OP_RETURN", offset);
     case OP_CLASS:
       return constantInstruction("OP_CLASS", chunk, offset);
+    case OP_INHERIT:
+      return simpleInstruction("OP_INHERIT", offset);
     case OP_METHOD:
       return constantInstruction("OP_METHOD", chunk, offset);
     default:

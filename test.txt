@@ -1,5 +1,17 @@
-class Vox{}
+class Vox{
+  fun printFunc() {
+    print "Hi";
+  };
+
+}
 print Vox;
+
+class SubVox < Vox {
+}
+print SubVox;
+
+var some = SubVox();
+some.printFunc();
 
 fun outer() {
   var x = "outside";
